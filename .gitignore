@@ -3,6 +3,10 @@
 *.env
 !.env.example
 
+# Internal plans
+PLAN.md
+plan.md
+
 # Python
 __pycache__/
 *.py[cod]
