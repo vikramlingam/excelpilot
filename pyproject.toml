@@ -1,0 +1,57 @@
+[project]
+name = "excelpilot"
+version = "1.0.0"
+description = "Live cross-platform Excel AI agent with Qwen 3.8 and Jev decision model"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic-ai-slim[openrouter,typesafe,mcp,evals]>=2.46.0",
+    "mcp>=2.2.0,<3",
+    "fastmcp>=4.0.5,<5",
+    "typesafe-sdk>=0.7.0",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "websockets>=13.0",
+    "pydantic-settings>=2.5.0",
+    "structlog>=24.4.0",
+    "openpyxl>=3.1.5",
+    "duckdb>=1.1.0",
+    "pandas>=2.2.0",
+    "pyarrow>=17.0.0",
+    "formulas>=1.3.4",
+    "exstruct>=0.8.0",
+    "sqlmodel>=0.0.22",
+    "python-dotenv>=1.0.0",
+    "zstandard>=0.23.0",
+]
+
+[project.optional-dependencies]
+native = [
+    "xlwings>=0.37.0",
+    "appscript>=1.4.0; sys_platform == 'darwin'",
+    "psutil>=6.0.0",
+]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "ruff>=0.7.0",
+    "mypy>=1.13.0",
+]
+
+[project.scripts]
+excelpilot = "excelpilot.__main__:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["server/excelpilot"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
