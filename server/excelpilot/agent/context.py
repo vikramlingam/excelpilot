@@ -24,28 +24,39 @@ async def build_sheet_schema_card(sheet_name: str) -> dict[str, Any]:
         used_addr = "A1"
 
     # Read top 4 rows for header and sample data
-    page = await router.read(
-        router.file_bridge.used_range(sheet_name)
-        if not router.officejs_bridge.is_connected
-        else used,
-        values=True,
-    )
-    rows = page.values or []
+    try:
+        ref_to_read = used if router.officejs_bridge.is_connected else router.file_bridge.used_range(sheet_name)
+        page = await router.read(ref_to_read, values=True)
+        rows = page.values or []
+    except Exception:
+        rows = []
+
     headers = [str(c) for c in rows[0]] if rows else []
     sample = rows[1:4] if len(rows) > 1 else []
 
-    tables = await router.list_tables(sheet_name)
-    pivots = await router.list_pivots(sheet_name)
-    charts = await router.list_charts(sheet_name)
+    try:
+        tables = await router.list_tables(sheet_name)
+    except Exception:
+        tables = []
+
+    try:
+        pivots = await router.list_pivots(sheet_name)
+    except Exception:
+        pivots = []
+
+    try:
+        charts = await router.list_charts(sheet_name)
+    except Exception:
+        charts = []
 
     return {
         "sheet": sheet_name,
         "used_range": used_addr,
         "headers": headers[:15],
         "sample_rows": sample,
-        "tables": [t.get("name") for t in tables],
-        "pivots": [p.get("name") for p in pivots],
-        "charts": [c.get("name") for c in charts],
+        "tables": [t.get("name") for t in tables if isinstance(t, dict)],
+        "pivots": [p.get("name") for p in pivots if isinstance(p, dict)],
+        "charts": [c.get("name") for c in charts if isinstance(c, dict)],
     }
 
 
