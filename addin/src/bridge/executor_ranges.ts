@@ -1,8 +1,9 @@
 /* global Excel */
+import { getWorksheetSafe } from "./helpers";
 
 export async function execRangeRead(params: any): Promise<any> {
   return await Excel.run(async (context) => {
-    const sheet = context.workbook.worksheets.getItem(params.sheet);
+    const sheet = await getWorksheetSafe(context, params.sheet, false);
     const range = sheet.getRange(params.address);
 
     if (params.values) range.load("values");
@@ -24,7 +25,7 @@ export async function execRangeRead(params: any): Promise<any> {
 
 export async function execRangeWrite(params: any): Promise<any> {
   return await Excel.run(async (context) => {
-    const sheet = context.workbook.worksheets.getItem(params.sheet);
+    const sheet = await getWorksheetSafe(context, params.sheet, true);
     const range = sheet.getRange(params.address);
 
     if (params.formulas) {
@@ -46,7 +47,7 @@ export async function execRangeWrite(params: any): Promise<any> {
 
 export async function execRangeClear(params: any): Promise<any> {
   return await Excel.run(async (context) => {
-    const sheet = context.workbook.worksheets.getItem(params.sheet);
+    const sheet = await getWorksheetSafe(context, params.sheet, false);
     const range = sheet.getRange(params.address);
     range.clear();
     await context.sync();
@@ -56,7 +57,7 @@ export async function execRangeClear(params: any): Promise<any> {
 
 export async function execFormatRange(params: any): Promise<any> {
   return await Excel.run(async (context) => {
-    const sheet = context.workbook.worksheets.getItem(params.sheet);
+    const sheet = await getWorksheetSafe(context, params.sheet, false);
     const range = sheet.getRange(params.address);
 
     if (params.fill && params.fill.color) {
@@ -78,7 +79,7 @@ export async function execFormatRange(params: any): Promise<any> {
 
 export async function execFormatNumber(params: any): Promise<any> {
   return await Excel.run(async (context) => {
-    const sheet = context.workbook.worksheets.getItem(params.sheet);
+    const sheet = await getWorksheetSafe(context, params.sheet, false);
     const range = sheet.getRange(params.address);
     range.numberFormat = [[params.format]];
     await context.sync();

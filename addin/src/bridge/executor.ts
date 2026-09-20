@@ -6,6 +6,7 @@ import {
   execRangeRead,
   execRangeWrite,
 } from "./executor_ranges";
+import { getWorksheetSafe } from "./helpers";
 
 export async function executeBridgeCall(method: string, params: any): Promise<any> {
   switch (method) {
@@ -39,7 +40,7 @@ export async function executeBridgeCall(method: string, params: any): Promise<an
 
     case "bridge.sheet.used_range":
       return await Excel.run(async (context) => {
-        const sheet = context.workbook.worksheets.getItem(params.sheet);
+        const sheet = await getWorksheetSafe(context, params.sheet, false);
         const used = sheet.getUsedRange();
         used.load("address");
         await context.sync();
@@ -56,8 +57,8 @@ export async function executeBridgeCall(method: string, params: any): Promise<an
 
     case "bridge.sheet.delete":
       return await Excel.run(async (context) => {
-        const s = context.workbook.worksheets.getItem(params.sheet);
-        s.delete();
+        const sheet = await getWorksheetSafe(context, params.sheet, false);
+        sheet.delete();
         await context.sync();
         return { success: true };
       });
@@ -73,7 +74,7 @@ export async function executeBridgeCall(method: string, params: any): Promise<an
 
     case "bridge.table.create":
       return await Excel.run(async (context) => {
-        const sheet = context.workbook.worksheets.getItem(params.sheet);
+        const sheet = await getWorksheetSafe(context, params.sheet, true);
         const range = sheet.getRange(params.address);
         const table = sheet.tables.add(range, params.has_headers ?? true);
         if (params.name) table.name = params.name;
@@ -85,7 +86,7 @@ export async function executeBridgeCall(method: string, params: any): Promise<an
     case "bridge.table.list":
       return await Excel.run(async (context) => {
         try {
-          const sheet = context.workbook.worksheets.getItem(params.sheet);
+          const sheet = await getWorksheetSafe(context, params.sheet, false);
           const tables = sheet.tables;
           tables.load("items/name,items/id");
           await context.sync();
@@ -97,11 +98,9 @@ export async function executeBridgeCall(method: string, params: any): Promise<an
 
     case "bridge.pivot.create":
       return await Excel.run(async (context) => {
-        const srcSheet = context.workbook.worksheets.getItem(params.source_sheet);
+        const srcSheet = await getWorksheetSafe(context, params.source_sheet, false);
         const srcRange = srcSheet.getRange(params.source_address);
-        const destSheet = params.dest_sheet
-          ? context.workbook.worksheets.getItem(params.dest_sheet)
-          : srcSheet;
+        const destSheet = await getWorksheetSafe(context, params.dest_sheet, true);
         const destRange = destSheet.getRange(params.dest_cell || "A3");
         const pt = destSheet.pivotTables.add(params.name || "PivotTable1", srcRange, destRange);
         if (params.rows && Array.isArray(params.rows)) {
@@ -122,9 +121,7 @@ export async function executeBridgeCall(method: string, params: any): Promise<an
     case "bridge.pivot.list":
       return await Excel.run(async (context) => {
         try {
-          const sheet = params.sheet
-            ? context.workbook.worksheets.getItem(params.sheet)
-            : context.workbook.worksheets.getActiveWorksheet();
+          const sheet = await getWorksheetSafe(context, params.sheet, false);
           const pivots = sheet.pivotTables;
           pivots.load("items/name,items/id");
           await context.sync();
@@ -136,7 +133,7 @@ export async function executeBridgeCall(method: string, params: any): Promise<an
 
     case "bridge.chart.create":
       return await Excel.run(async (context) => {
-        const sheet = context.workbook.worksheets.getItem(params.source_sheet);
+        const sheet = await getWorksheetSafe(context, params.source_sheet, false);
         const range = sheet.getRange(params.source_address);
         const chart = sheet.charts.add(params.type || "ColumnClustered", range, "Auto");
         if (params.title) chart.title.text = params.title;
@@ -148,7 +145,7 @@ export async function executeBridgeCall(method: string, params: any): Promise<an
     case "bridge.chart.list":
       return await Excel.run(async (context) => {
         try {
-          const sheet = context.workbook.worksheets.getItem(params.sheet);
+          const sheet = await getWorksheetSafe(context, params.sheet, false);
           const charts = sheet.charts;
           charts.load("items/name,items/id");
           await context.sync();
@@ -166,7 +163,7 @@ export async function executeBridgeCall(method: string, params: any): Promise<an
 
     case "bridge.view.select":
       return await Excel.run(async (context) => {
-        const sheet = context.workbook.worksheets.getItem(params.sheet);
+        const sheet = await getWorksheetSafe(context, params.sheet, false);
         const range = sheet.getRange(params.address);
         range.select();
         await context.sync();
@@ -175,7 +172,7 @@ export async function executeBridgeCall(method: string, params: any): Promise<an
 
     case "bridge.view.highlight":
       return await Excel.run(async (context) => {
-        const sheet = context.workbook.worksheets.getItem(params.sheet);
+        const sheet = await getWorksheetSafe(context, params.sheet, false);
         const range = sheet.getRange(params.address);
         range.format.fill.color = params.color || "#FFF2B2";
         await context.sync();
@@ -193,7 +190,7 @@ export async function executeBridgeCall(method: string, params: any): Promise<an
 
     case "bridge.format.autofit":
       return await Excel.run(async (context) => {
-        const sheet = context.workbook.worksheets.getItem(params.sheet);
+        const sheet = await getWorksheetSafe(context, params.sheet, false);
         const range = sheet.getRange(params.address);
         range.format.autofitColumns();
         range.format.autofitRows();
@@ -222,7 +219,7 @@ export async function executeBridgeCall(method: string, params: any): Promise<an
 
     case "bridge.comment.add":
       return await Excel.run(async (context) => {
-        const sheet = context.workbook.worksheets.getItem(params.sheet);
+        const sheet = await getWorksheetSafe(context, params.sheet, false);
         sheet.comments.add(params.cell, params.text);
         await context.sync();
         return { success: true };
@@ -230,7 +227,7 @@ export async function executeBridgeCall(method: string, params: any): Promise<an
 
     case "bridge.view.freeze_panes":
       return await Excel.run(async (context) => {
-        const sheet = context.workbook.worksheets.getItem(params.sheet);
+        const sheet = await getWorksheetSafe(context, params.sheet, false);
         sheet.freezePanes.freezeRows(params.row || 1);
         await context.sync();
         return { success: true };
