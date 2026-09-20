@@ -7,10 +7,17 @@ export class BridgeRpcClient {
   private onStatusChange?: (connected: boolean) => void;
 
   constructor(
-    url: string = "ws://127.0.0.1:8765/bridge",
+    url?: string,
     onStatusChange?: (connected: boolean) => void
   ) {
-    this.url = url;
+    if (url && !url.startsWith("/")) {
+      this.url = url;
+    } else {
+      const path = url || "/bridge";
+      const isHttps = typeof window !== "undefined" && window.location.protocol === "https:";
+      const host = typeof window !== "undefined" && window.location.host ? window.location.host : "127.0.0.1:8765";
+      this.url = `${isHttps ? "wss:" : "ws:"}//${host}${path}`;
+    }
     this.onStatusChange = onStatusChange;
   }
 

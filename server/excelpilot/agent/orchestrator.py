@@ -12,7 +12,7 @@ from excelpilot.agent.verify import verify_claims
 from excelpilot.config import settings
 from excelpilot.store.db import store
 from excelpilot.telemetry import logger
-from excelpilot.tools.registry import SKILL_TOOL_SUBSETS, mcp
+from excelpilot.tools.registry import SKILL_TOOL_SUBSETS, TOOL_FUNCTIONS
 
 
 class Orchestrator:
@@ -65,10 +65,8 @@ class Orchestrator:
         # Step 5: Attach tools filtered to skill subset
         subset = SKILL_TOOL_SUBSETS.get(intent, set())
         for tool_name in subset:
-            if hasattr(mcp, "tools") and tool_name in mcp.tools:
-                t_obj = mcp.tools[tool_name]
-                # Register wrapper on agent
-                agent.tool_plain(t_obj.fn)
+            if tool_name in TOOL_FUNCTIONS:
+                agent.tool_plain(TOOL_FUNCTIONS[tool_name])
 
         facts_table: dict[str, Any] = {}
 
@@ -78,7 +76,7 @@ class Orchestrator:
                 async for text in result.stream_text(delta=True):
                     yield {"type": "text_delta", "delta": text}
 
-                full_text = await result.get_data()
+                full_text = await result.get_output()
 
                 # Step 6: J5 Claim verification against computed facts
                 verified_text, claims = await verify_claims(str(full_text), facts_table)

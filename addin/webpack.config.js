@@ -82,6 +82,14 @@ module.exports = async () => {
         options: httpsOptions,
       },
       port: 3000,
+      proxy: [
+        {
+          context: ["/bridge", "/chat", "/health", "/api"],
+          target: "http://127.0.0.1:8765",
+          ws: true,
+          changeOrigin: true,
+        },
+      ],
     },
   };
 };

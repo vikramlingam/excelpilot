@@ -26,8 +26,14 @@ export const App: React.FC = () => {
   const chatWsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
+    const isHttps = typeof window !== "undefined" && window.location.protocol === "https:";
+    const host = typeof window !== "undefined" && window.location.host ? window.location.host : "127.0.0.1:8765";
+    const wsProto = isHttps ? "wss:" : "ws:";
+    const bridgeUrl = `${wsProto}//${host}/bridge`;
+    const chatUrl = `${wsProto}//${host}/chat`;
+
     // 1. Initialize Bridge WebSocket
-    const bridge = new BridgeRpcClient("ws://127.0.0.1:8765/bridge", (connected) => {
+    const bridge = new BridgeRpcClient(bridgeUrl, (connected) => {
       setBridgeConnected(connected);
     });
     bridge.connect();
@@ -35,7 +41,7 @@ export const App: React.FC = () => {
 
     // 2. Initialize Chat WebSocket
     const connectChatWs = () => {
-      const chatWs = new WebSocket("ws://127.0.0.1:8765/chat");
+      const chatWs = new WebSocket(chatUrl);
       chatWs.onmessage = (event) => {
         try {
           const ev = JSON.parse(event.data);
@@ -72,6 +78,23 @@ export const App: React.FC = () => {
       setModelTier(event.tier === "capable" ? "Capable" : "Flash");
     } else if (event.type === "approval_required") {
       setApprovalReq(event);
+    } else if (event.type === "tool_call") {
+      setTools((prev) => [
+        ...prev,
+        {
+          id: String(Date.now()),
+          name: event.tool || "tool",
+          args: event.args || {},
+          status: "done",
+          resultPreview: event.result ? JSON.stringify(event.result) : undefined,
+        },
+      ]);
+    } else if (event.type === "error") {
+      setIsLoading(false);
+      setMessages((prev) => [
+        ...prev,
+        { id: String(Date.now()), sender: "assistant", text: `Error: ${event.message}` },
+      ]);
     } else if (event.type === "done") {
       setIsLoading(false);
       if (event.cost_usd) setSessionCost((prev) => prev + event.cost_usd);
@@ -84,6 +107,19 @@ export const App: React.FC = () => {
       { id: String(Date.now()), sender: "user", text },
     ]);
     setIsLoading(true);
+
+    if (!chatWsRef.current || chatWsRef.current.readyState !== WebSocket.OPEN) {
+      setIsLoading(false);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: String(Date.now()),
+          sender: "assistant",
+          text: "Still connecting to ExcelPilot backend. Please ensure the server is running.",
+        },
+      ]);
+      return;
+    }
 
     let activeSheet = "Sheet1";
     let selection = "A1";
@@ -102,16 +138,14 @@ export const App: React.FC = () => {
       // Fallback if running outside Excel
     }
 
-    if (chatWsRef.current && chatWsRef.current.readyState === WebSocket.OPEN) {
-      chatWsRef.current.send(
-        JSON.stringify({
-          message: text,
-          session_id: "addin_session",
-          active_sheet: activeSheet,
-          selection,
-        })
-      );
-    }
+    chatWsRef.current.send(
+      JSON.stringify({
+        message: text,
+        session_id: "addin_session",
+        active_sheet: activeSheet,
+        selection,
+      })
+    );
   };
 
   const handleSelectRange = async (sheetName: string, address: string) => {
