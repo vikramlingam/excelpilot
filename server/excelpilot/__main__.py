@@ -7,6 +7,7 @@ from excelpilot.analysis.report import generate_audit_report
 from excelpilot.bridge.file import FileBridge
 from excelpilot.bridge.router import router
 from excelpilot.cli.doctor import run_doctor
+from excelpilot.cli.launcher import launch_all
 from excelpilot.config import settings
 from excelpilot.tools.registry import mcp
 
@@ -14,6 +15,9 @@ from excelpilot.tools.registry import mcp
 def main() -> None:
     parser = argparse.ArgumentParser(description="ExcelPilot CLI")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
+
+    # Command: start (one-command launcher for backend, add-in, and Excel)
+    subparsers.add_parser("start", help="Start backend, add-in dev server, and open Excel")
 
     # Command: serve
     serve_parser = subparsers.add_parser("serve", help="Start the FastAPI bridge and chat server")
@@ -33,7 +37,9 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    if args.command == "serve":
+    if args.command == "start":
+        launch_all()
+    elif args.command == "serve":
         uvicorn.run(
             "excelpilot.app.api:app",
             host=args.host,
@@ -49,7 +55,6 @@ def main() -> None:
     elif args.command == "doctor":
         asyncio.run(run_doctor())
     elif args.command == "analyze":
-        # Point router to the specified file
         router.file_bridge = FileBridge(args.file_path)
         report = asyncio.run(generate_audit_report())
         print(report["report_markdown"])

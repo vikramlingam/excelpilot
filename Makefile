@@ -1,4 +1,7 @@
-.PHONY: dev serve mcp doctor test lint addin-install addin-build sideload-mac
+.PHONY: start dev serve mcp doctor test lint addin-install addin-build sideload-mac
+
+start:
+	./start.sh
 
 dev:
 	uv run python -m excelpilot serve

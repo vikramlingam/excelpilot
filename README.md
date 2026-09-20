@@ -13,7 +13,23 @@ ExcelPilot is a live, cross-platform Excel AI agent for macOS and Windows. It wo
 - Pre-write snapshot and rollback system to undo any change.
 - Office.js React task pane with live streaming, tool logs, diff approval cards, and undo buttons.
 
-## Quick Start
+## One-Command Launch
+
+Start ExcelPilot, launch the add-in server, and open Microsoft Excel with a single command:
+
+```bash
+./start.sh
+```
+*(or `make start` or `uv run python -m excelpilot start`)*
+
+This command automatically:
+1. Sideloads the add-in manifest for Excel.
+2. Builds the add-in bundle if needed.
+3. Starts the Python backend server on `http://127.0.0.1:8765`.
+4. Starts the Office Add-in server on `https://localhost:3000`.
+5. Opens Microsoft Excel so you can use ExcelPilot immediately from the Home ribbon.
+
+## First-Time Setup
 
 1. Install Python dependencies:
    ```bash
@@ -31,15 +47,17 @@ ExcelPilot is a live, cross-platform Excel AI agent for macOS and Windows. It wo
    uv run python -m excelpilot doctor
    ```
 
-4. Start the backend server:
+4. Launch everything:
    ```bash
-   uv run python -m excelpilot serve
+   ./start.sh
    ```
 
-5. Sideload the Office Add-in in Excel (macOS):
-   ```bash
-   ./scripts/sideload-mac.sh
-   ```
+## Sideloading into Excel Manually (if required)
+
+If your system requires manual add-in loading:
+1. In Excel, go to the **Insert** tab.
+2. Click **Add-ins** -> **Manage My Add-ins** -> **Upload My Add-in**.
+3. Select `addin/manifest.xml`.
 
 ## License
 
