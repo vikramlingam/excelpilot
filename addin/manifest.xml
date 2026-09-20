@@ -41,7 +41,7 @@
       <Host xsi:type="Workbook">
         <DesktopFormFactor>
           <ExtensionPoint xsi:type="PrimaryCommandSurface">
-            <CustomTab id="TabHome">
+            <OfficeTab id="TabHome">
               <Group id="GroupExcelPilot">
                 <Label resid="GroupLabel"/>
                 <Icon>
@@ -67,7 +67,7 @@
                   </Action>
                 </Control>
               </Group>
-            </CustomTab>
+            </OfficeTab>
           </ExtensionPoint>
         </DesktopFormFactor>
       </Host>
