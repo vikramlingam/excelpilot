@@ -4,10 +4,13 @@ from pydantic import BaseModel
 
 
 class ChatRequest(BaseModel):
-    message: str
+    message: str = ""
     session_id: str = "default_session"
     active_sheet: str = "Sheet1"
     selection: str | None = None
+    model: str | None = None
+    file_base64: str | None = None
+    file_name: str | None = None
 
 
 class AgentEvent(BaseModel):

@@ -1,0 +1,27 @@
+/** Shared refined light slate tokens — clean, softly tinted light background. */
+export const theme = {
+  bg: "#eef2f6",
+  surface: "#ffffff",
+  surfaceMuted: "#f1f5f9",
+  border: "#e2e8f0",
+  borderStrong: "#cbd5e1",
+  text: "#0f172a",
+  textMuted: "#475569",
+  textFaint: "#64748b",
+  slate: "#1e293b",
+  slateDark: "#0f172a",
+  slateBlue: "#2563eb",
+  accent: "#2563eb",
+  accentDark: "#1d4ed8",
+  accentSoft: "#eff6ff",
+  accentBorder: "#bfdbfe",
+  success: "#059669",
+  successSoft: "#d1fae5",
+  danger: "#dc2626",
+  dangerSoft: "#fee2e2",
+  shadow: "0 1px 3px rgba(15, 23, 42, 0.08)",
+  shadowMd: "0 10px 25px -5px rgba(15, 23, 42, 0.12)",
+  radius: 12,
+  font:
+    '"Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif',
+};

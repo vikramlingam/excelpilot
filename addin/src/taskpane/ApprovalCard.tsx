@@ -5,6 +5,7 @@ interface ApprovalCardProps {
   toolName: string;
   args: any;
   probs: Record<string, number>;
+  cells?: number;
   onApprove: () => void;
   onReject: () => void;
 }
@@ -13,6 +14,7 @@ export const ApprovalCard: React.FC<ApprovalCardProps> = ({
   toolName,
   args,
   probs,
+  cells,
   onApprove,
   onReject,
 }) => {
@@ -21,38 +23,34 @@ export const ApprovalCard: React.FC<ApprovalCardProps> = ({
       style={{
         margin: "8px 12px",
         padding: "10px",
-        backgroundColor: "#fffdf5",
-        border: "1px solid #ffd335",
-        borderRadius: "6px",
+        backgroundColor: "#f4f6f9",
+        border: "1px solid #c3cedc",
+        borderRadius: "8px",
         display: "flex",
         flexDirection: "column",
         gap: "8px",
       }}
     >
       <div>
-        <Text weight="semibold" size={300} style={{ color: "#795e00" }}>
-          Action Approval Required
+        <Text weight="semibold" size={300} style={{ color: "#1e293b" }}>
+          Confirm this change
         </Text>
-        <div style={{ fontSize: "12px", marginTop: "4px" }}>
-          Operation: <b>{toolName}</b> on <b>{args?.sheet || ""}!{args?.address || ""}</b>
+        <div style={{ fontSize: "12px", marginTop: "4px", color: "#475569" }}>
+          {toolName} on {args?.sheet || ""}!{args?.address || ""}
+          {cells ? ` · ${cells} cells` : ""}
         </div>
       </div>
 
       <div style={{ fontSize: "11px", color: "#616161" }}>
-        Jev Confidence:
-        <div style={{ display: "flex", gap: "10px", marginTop: "2px" }}>
-          <span>Requested: {((probs?.requested ?? 0.5) * 100).toFixed(0)}%</span>
-          <span>Scoped: {((probs?.scoped ?? 0.5) * 100).toFixed(0)}%</span>
-          <span>Reversible: {((probs?.reversible ?? 0.5) * 100).toFixed(0)}%</span>
-        </div>
+        Review before Excel is changed.
       </div>
 
       <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
         <Button size="small" appearance="secondary" onClick={onReject}>
-          Reject
+          Decline
         </Button>
         <Button size="small" appearance="primary" onClick={onApprove}>
-          Approve Change
+          Apply
         </Button>
       </div>
     </div>

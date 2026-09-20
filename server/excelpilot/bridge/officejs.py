@@ -77,6 +77,10 @@ class OfficeJsBridge(ExcelBridge):
         call_id = data.get("id")
         if call_id in self._pending:
             fut = self._pending.pop(call_id)
+            # The waiting turn may have been cancelled/timed out; never raise InvalidStateError
+            # here, because that would tear down the whole bridge WebSocket.
+            if fut.done():
+                return
             if "error" in data:
                 err = data["error"]
                 fut.set_exception(
@@ -112,6 +116,10 @@ class OfficeJsBridge(ExcelBridge):
     async def delete_sheet(self, name: str) -> bool:
         res = await self._rpc("bridge.sheet.delete", {"sheet": name})
         return bool(res.get("success", False))
+
+    async def reset_workbook(self, keep_name: str = "Sheet1") -> dict[str, Any]:
+        res = await self._rpc("bridge.workbook.reset", {"keep_name": keep_name})
+        return res if isinstance(res, dict) else {"success": bool(res)}
 
     async def set_sheet_visibility(self, name: str, visible: bool) -> bool:
         res = await self._rpc("bridge.sheet.set_visibility", {"sheet": name, "visible": visible})

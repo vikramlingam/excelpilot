@@ -6,12 +6,28 @@ import time
 from pathlib import Path
 
 
+def _cleanup_port(port: int) -> None:
+    try:
+        if platform.system() in ("Darwin", "Linux"):
+            res = subprocess.run(["lsof", "-ti", f":{port}"], capture_output=True, text=True, check=False)
+            pids = res.stdout.strip().split()
+            for pid in pids:
+                if pid and pid.isdigit():
+                    subprocess.run(["kill", "-9", pid], check=False)
+    except Exception:
+        pass
+
+
 def launch_all() -> None:
     repo_dir = Path(__file__).resolve().parents[3]
     addin_dir = repo_dir / "addin"
     manifest_file = addin_dir / "manifest.xml"
 
     print("Starting ExcelPilot with a single command...\n")
+
+    # Step 0: Ensure ports 8765 and 3000 are clear
+    _cleanup_port(8765)
+    _cleanup_port(3000)
 
     # Step 1: Check manifest sideloading on macOS
     if platform.system() == "Darwin":

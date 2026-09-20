@@ -2,6 +2,7 @@ import json
 
 from fastapi import WebSocket, WebSocketDisconnect
 
+from excelpilot.agent.context import invalidate_schema_cache
 from excelpilot.bridge.router import router
 from excelpilot.telemetry import logger
 
@@ -24,6 +25,7 @@ async def handle_bridge_websocket(websocket: WebSocket) -> None:
             # Handle event notifications from Excel (e.g. selection or change events)
             elif "method" in data and data["method"].startswith("event."):
                 logger.debug("Received Excel event notification", method=data["method"])
+                invalidate_schema_cache()
 
     except WebSocketDisconnect:
         logger.info("Office.js add-in disconnected from bridge")

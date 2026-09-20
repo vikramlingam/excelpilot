@@ -6,6 +6,16 @@ import {
   execRangeRead,
   execRangeWrite,
 } from "./executor_ranges";
+import {
+  execChartCreate,
+  execConditionalFormatAdd,
+  execConditionalFormatClear,
+  execPivotAddField,
+  execPivotCreate,
+  execPivotRefresh,
+  execSlicerAdd,
+  execTableAddColumn,
+} from "./executor_objects";
 import { getWorksheetSafe } from "./helpers";
 
 export async function executeBridgeCall(method: string, params: any): Promise<any> {
@@ -49,10 +59,19 @@ export async function executeBridgeCall(method: string, params: any): Promise<an
 
     case "bridge.sheet.add":
       return await Excel.run(async (context) => {
-        const s = context.workbook.worksheets.add(params.name);
+        const wanted = params.name ? String(params.name) : "";
+        if (wanted) {
+          const existing = context.workbook.worksheets.getItemOrNullObject(wanted);
+          existing.load(["name", "position"]);
+          await context.sync();
+          if (!existing.isNullObject) {
+            return { name: existing.name, index: existing.position, visibility: "visible", existed: true };
+          }
+        }
+        const s = context.workbook.worksheets.add(wanted || undefined);
         s.load(["name", "position"]);
         await context.sync();
-        return { name: s.name, index: s.position, visibility: "visible" };
+        return { name: s.name, index: s.position, visibility: "visible", existed: false };
       });
 
     case "bridge.sheet.delete":
@@ -61,6 +80,33 @@ export async function executeBridgeCall(method: string, params: any): Promise<an
         sheet.delete();
         await context.sync();
         return { success: true };
+      });
+
+    case "bridge.workbook.reset":
+      return await Excel.run(async (context) => {
+        const keepName = params.keep_name || "Sheet1";
+        const sheets = context.workbook.worksheets;
+        sheets.load("items/name");
+        await context.sync();
+        const names = sheets.items.map((s) => s.name);
+        let keeper = sheets.getItemOrNullObject(keepName);
+        keeper.load("name");
+        await context.sync();
+        if (keeper.isNullObject) {
+          keeper = sheets.add(keepName);
+          await context.sync();
+        }
+        keeper.getUsedRangeOrNullObject().clear();
+        const deleted: string[] = [];
+        for (const n of names) {
+          if (n !== keeper.name) {
+            sheets.getItem(n).delete();
+            deleted.push(n);
+          }
+        }
+        keeper.activate();
+        await context.sync();
+        return { success: true, kept: keeper.name, deleted };
       });
 
     case "bridge.range.read":
@@ -75,12 +121,20 @@ export async function executeBridgeCall(method: string, params: any): Promise<an
     case "bridge.table.create":
       return await Excel.run(async (context) => {
         const sheet = await getWorksheetSafe(context, params.sheet, true);
+        if (params.name) {
+          const existing = sheet.tables.getItemOrNullObject(params.name);
+          existing.load("name");
+          await context.sync();
+          if (!existing.isNullObject) {
+            return { name: existing.name, existed: true };
+          }
+        }
         const range = sheet.getRange(params.address);
         const table = sheet.tables.add(range, params.has_headers ?? true);
         if (params.name) table.name = params.name;
         table.load("name");
         await context.sync();
-        return { name: table.name };
+        return { name: table.name, existed: false };
       });
 
     case "bridge.table.list":
@@ -97,26 +151,25 @@ export async function executeBridgeCall(method: string, params: any): Promise<an
       });
 
     case "bridge.pivot.create":
-      return await Excel.run(async (context) => {
-        const srcSheet = await getWorksheetSafe(context, params.source_sheet, false);
-        const srcRange = srcSheet.getRange(params.source_address);
-        const destSheet = await getWorksheetSafe(context, params.dest_sheet, true);
-        const destRange = destSheet.getRange(params.dest_cell || "A3");
-        const pt = destSheet.pivotTables.add(params.name || "PivotTable1", srcRange, destRange);
-        if (params.rows && Array.isArray(params.rows)) {
-          for (const row of params.rows) {
-            pt.rowHierarchies.add(pt.hierarchies.getItem(row));
-          }
-        }
-        if (params.values && Array.isArray(params.values)) {
-          for (const val of params.values) {
-            pt.dataHierarchies.add(pt.hierarchies.getItem(val));
-          }
-        }
-        pt.load("name");
-        await context.sync();
-        return { name: pt.name };
-      });
+      return await execPivotCreate(params);
+
+    case "bridge.pivot.add_field":
+      return await execPivotAddField(params);
+
+    case "bridge.pivot.refresh":
+      return await execPivotRefresh(params);
+
+    case "bridge.slicer.add":
+      return await execSlicerAdd(params);
+
+    case "bridge.table.add_column":
+      return await execTableAddColumn(params);
+
+    case "bridge.format.conditional_add":
+      return await execConditionalFormatAdd(params);
+
+    case "bridge.format.conditional_clear":
+      return await execConditionalFormatClear(params);
 
     case "bridge.pivot.list":
       return await Excel.run(async (context) => {
@@ -132,15 +185,7 @@ export async function executeBridgeCall(method: string, params: any): Promise<an
       });
 
     case "bridge.chart.create":
-      return await Excel.run(async (context) => {
-        const sheet = await getWorksheetSafe(context, params.source_sheet, false);
-        const range = sheet.getRange(params.source_address);
-        const chart = sheet.charts.add(params.type || "ColumnClustered", range, "Auto");
-        if (params.title) chart.title.text = params.title;
-        chart.load("name");
-        await context.sync();
-        return { name: chart.name };
-      });
+      return await execChartCreate(params);
 
     case "bridge.chart.list":
       return await Excel.run(async (context) => {
@@ -233,8 +278,60 @@ export async function executeBridgeCall(method: string, params: any): Promise<an
         return { success: true };
       });
 
+    case "bridge.sheet.rename":
+      return await Excel.run(async (context) => {
+        const sheet = await getWorksheetSafe(context, params.old_name, false);
+        sheet.name = params.new_name;
+        sheet.load(["name", "position"]);
+        await context.sync();
+        return { name: sheet.name, index: sheet.position, visibility: "visible" };
+      });
+
+    case "bridge.sheet.set_visibility":
+      return await Excel.run(async (context) => {
+        const sheet = await getWorksheetSafe(context, params.sheet, false);
+        sheet.visibility = params.visible ? "Visible" : "Hidden";
+        await context.sync();
+        return { success: true };
+      });
+
+    case "bridge.validation.add":
+      return await Excel.run(async (context) => {
+        const sheet = await getWorksheetSafe(context, params.sheet, false);
+        const range = sheet.getRange(params.address);
+        const rule = params.rule || {};
+        const t = String(rule.type || "list").toLowerCase();
+        if (t === "list") {
+          range.dataValidation.rule = { list: { inCellDropDown: true, source: rule.formula1 } };
+        } else if (t === "wholenumber" || t === "whole_number" || t === "decimal") {
+          const key = t === "decimal" ? "decimal" : "wholeNumber";
+          range.dataValidation.rule = {
+            [key]: { formula1: rule.formula1, formula2: rule.formula2, operator: rule.operator || "Between" },
+          } as any;
+        } else if (t === "date") {
+          range.dataValidation.rule = {
+            date: { formula1: rule.formula1, formula2: rule.formula2, operator: rule.operator || "Between" },
+          } as any;
+        } else {
+          range.dataValidation.rule = { custom: { formula: rule.formula1 } };
+        }
+        await context.sync();
+        return { success: true };
+      });
+
+    case "bridge.view.screenshot":
+      return await Excel.run(async (context) => {
+        const target = String(params.target || "");
+        const sheetName = target.includes("!") ? target.split("!")[0].replace(/'/g, "") : target;
+        const addr = target.includes("!") ? target.split("!")[1] : null;
+        const sheet = await getWorksheetSafe(context, sheetName, false);
+        const range = addr ? sheet.getRange(addr) : sheet.getUsedRange();
+        const img = range.getImage();
+        await context.sync();
+        return { image_bytes: img.value };
+      });
+
     default:
-      console.warn(`Bridge method ${method} not explicitly handled, returning empty success`);
-      return { success: true };
+      throw { code: "MethodNotSupported", message: `Bridge method ${method} is not implemented in the add-in` };
   }
 }

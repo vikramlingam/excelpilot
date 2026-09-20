@@ -11,7 +11,7 @@
   <ProviderName>ExcelPilot</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="ExcelPilot AI Agent" />
-  <Description DefaultValue="Live cross-platform Excel AI Agent powered by Qwen 3.8 and Jev" />
+  <Description DefaultValue="Local Excel agent (still under development). Chat in the task pane; Jev judges destructive changes." />
   <IconUrl DefaultValue="https://localhost:3000/assets/icon-32.png"/>
   <HighResolutionIconUrl DefaultValue="https://localhost:3000/assets/icon-64.png"/>
   <SupportUrl DefaultValue="https://github.com/vikramlingam/excelpilot"/>

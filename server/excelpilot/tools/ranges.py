@@ -4,6 +4,26 @@ from excelpilot.bridge.models import Page, RangeRef
 from excelpilot.bridge.router import router
 
 
+def as_grid(values: Any) -> list[list[Any]]:
+    """Coerce model output into a rectangular 2-D array Excel will accept."""
+    if values is None:
+        return [[""]]
+    if not isinstance(values, list):
+        return [[values]]
+    if not values:
+        return [[""]]
+    if not isinstance(values[0], list):
+        return [list(values)]
+    width = max((len(r) if isinstance(r, list) else 1) for r in values)
+    grid: list[list[Any]] = []
+    for row in values:
+        cells = list(row) if isinstance(row, list) else [row]
+        if len(cells) < width:
+            cells = cells + [None] * (width - len(cells))
+        grid.append(cells[:width])
+    return grid
+
+
 async def range_read(
     sheet: str,
     address: str,
@@ -25,7 +45,7 @@ async def range_write_values(
 ) -> dict[str, Any]:
     """Write a 2D array of values to a worksheet range."""
     ref = RangeRef(sheet=sheet, address=address)
-    res = await router.write(ref, values=values)
+    res = await router.write(ref, values=as_grid(values))
     return res.model_dump()
 
 
@@ -34,7 +54,7 @@ async def range_write_formulas(
 ) -> dict[str, Any]:
     """Write a 2D array of formula strings to a worksheet range."""
     ref = RangeRef(sheet=sheet, address=address)
-    res = await router.write(ref, formulas=formulas)
+    res = await router.write(ref, formulas=as_grid(formulas))
     return res.model_dump()
 
 
@@ -51,5 +71,12 @@ async def range_fill_down(
     src = RangeRef(sheet=sheet, address=source_address)
     data = await router.read(src, values=True, formulas=True)
     dst = RangeRef(sheet=sheet, address=target_address)
-    res = await router.write(dst, values=data.values, formulas=data.formulas)
+    formulas = as_grid(data.formulas)
+    has_formula = any(
+        isinstance(cell, str) and cell.startswith("=") for row in formulas for cell in row
+    )
+    if has_formula:
+        res = await router.write(dst, formulas=formulas)
+    else:
+        res = await router.write(dst, values=as_grid(data.values))
     return res.model_dump()

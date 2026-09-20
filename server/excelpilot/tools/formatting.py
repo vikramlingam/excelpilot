@@ -4,17 +4,42 @@ from excelpilot.bridge.models import RangeRef
 from excelpilot.bridge.router import router
 
 
+def _as_dict(value: Any) -> dict[str, Any] | None:
+    if value is None or value == "" or value == {}:
+        return None
+    if isinstance(value, dict):
+        return value
+    if isinstance(value, str):
+        s = value.strip()
+        if s.startswith("#") or s.lower() in {"yellow", "red", "green", "blue", "orange", "grey", "gray"}:
+            return {"color": s}
+        if s.lower() in {"bold", "italic", "underline"}:
+            return {s.lower(): True}
+    return None
+
+
 async def format_range(
     sheet: str,
     address: str,
-    font: dict[str, Any] | None = None,
-    fill: dict[str, Any] | None = None,
-    borders: dict[str, Any] | None = None,
-    alignment: dict[str, Any] | None = None,
-) -> bool:
-    """Apply font, fill color, borders, and alignment to a range."""
-    ref = RangeRef(sheet=sheet, address=address)
-    return await router.format(ref, font=font, fill=fill, borders=borders, alignment=alignment)
+    font: Any = None,
+    fill: Any = None,
+    borders: Any = None,
+    alignment: Any = None,
+) -> dict[str, Any]:
+    """Apply font, fill, borders, and alignment. Nested objects may be omitted.
+    Hex strings in fill are treated as fill.color. Never raises — returns {success, error}."""
+    try:
+        ref = RangeRef(sheet=sheet, address=address)
+        ok = await router.format(
+            ref,
+            font=_as_dict(font),
+            fill=_as_dict(fill),
+            borders=_as_dict(borders),
+            alignment=_as_dict(alignment),
+        )
+        return {"success": bool(ok), "address": address}
+    except Exception as err:
+        return {"success": False, "error": str(err), "address": address}
 
 
 async def number_format(sheet: str, address: str, format_code: str) -> bool:

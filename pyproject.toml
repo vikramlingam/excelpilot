@@ -1,7 +1,7 @@
 [project]
 name = "excelpilot"
 version = "1.0.0"
-description = "Live cross-platform Excel AI agent with Qwen 3.8 and Jev decision model"
+description = "Local Excel agent (Office.js add-in + pydantic-ai). Still under development."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -23,6 +23,9 @@ dependencies = [
     "sqlmodel>=0.0.22",
     "python-dotenv>=1.0.0",
     "zstandard>=0.23.0",
+    "pypdf>=5.1.0",
+    "pdfplumber>=0.11.0",
+    "python-multipart>=0.0.12",
 ]
 
 [project.optional-dependencies]

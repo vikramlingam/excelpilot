@@ -27,6 +27,7 @@ mcp.tool(name="sheet_list")(sheets.sheet_list)
 mcp.tool(name="sheet_add")(sheets.sheet_add)
 mcp.tool(name="sheet_rename")(sheets.sheet_rename)
 mcp.tool(name="sheet_delete")(sheets.sheet_delete)
+mcp.tool(name="workbook_reset")(sheets.workbook_reset)
 mcp.tool(name="sheet_set_visibility")(sheets.sheet_set_visibility)
 
 mcp.tool(name="range_read")(ranges.range_read)
@@ -89,6 +90,7 @@ TOOL_FUNCTIONS = {
     "sheet_add": sheets.sheet_add,
     "sheet_rename": sheets.sheet_rename,
     "sheet_delete": sheets.sheet_delete,
+    "workbook_reset": sheets.workbook_reset,
     "sheet_set_visibility": sheets.sheet_set_visibility,
     "range_read": ranges.range_read,
     "range_write_values": ranges.range_write_values,
@@ -144,25 +146,34 @@ SKILL_TOOL_SUBSETS: dict[str, set[str]] = {
         "formula_audit_sheet",
         "view_screenshot",
     },
+    # Mixed requests ("add a total and bold it") are common: every edit-type skill carries the
+    # core write + format tools so the model never lacks the tool it needs mid-task.
     "edit_values": {
-        "sheet_add",
         "range_read",
         "range_write_values",
         "range_write_formulas",
         "range_clear",
+        "range_fill_down",
+        "format_range",
+        "number_format",
+        "autofit",
         "table_create",
         "trim_clean_range",
         "duplicates_find",
-        "snapshot_restore",
+        "sheet_add",
+        "sheet_delete",
+        "workbook_reset",
     },
     "formula": {
-        "sheet_add",
         "range_read",
-        "range_write_values",
-        "formula_explain",
-        "formula_evaluate",
         "range_write_formulas",
+        "range_write_values",
+        "range_fill_down",
+        "format_range",
+        "number_format",
+        "formula_explain",
         "name_define",
+        "sheet_add",
     },
     "format": {
         "format_range",
@@ -171,6 +182,10 @@ SKILL_TOOL_SUBSETS: dict[str, set[str]] = {
         "conditional_format_clear",
         "autofit",
         "freeze_panes",
+        "range_read",
+        "range_write_values",
+        "range_write_formulas",
+        "table_create",
     },
     "pivot_or_chart": {
         "sheet_add",
@@ -180,11 +195,14 @@ SKILL_TOOL_SUBSETS: dict[str, set[str]] = {
         "table_create",
         "table_list",
         "pivot_create",
+        "pivot_add_value",
         "pivot_list",
         "chart_create",
         "chart_list",
         "slicer_add",
-        "view_screenshot",
+        "format_range",
+        "number_format",
+        "autofit",
     },
     "dashboard": {
         "sheet_add",
@@ -196,8 +214,9 @@ SKILL_TOOL_SUBSETS: dict[str, set[str]] = {
         "chart_create",
         "slicer_add",
         "format_range",
+        "number_format",
+        "autofit",
         "name_define",
-        "view_screenshot",
     },
     "script": {
         "script_run_typescript",

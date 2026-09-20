@@ -1,0 +1,11 @@
+{
+  "name": "excelpilot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ExcelPilot repository root launcher and scripts",
+  "scripts": {
+    "build": "npm run --prefix addin build",
+    "dev-server": "npm run --prefix addin dev-server",
+    "start": "./start.sh"
+  }
+}

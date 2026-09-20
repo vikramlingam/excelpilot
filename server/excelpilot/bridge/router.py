@@ -66,6 +66,13 @@ class BridgeRouter(ExcelBridge):
     async def delete_sheet(self, name: str) -> bool:
         return await self.active_bridge.delete_sheet(name)
 
+    async def reset_workbook(self, keep_name: str = "Sheet1") -> dict[str, Any]:
+        bridge = self.active_bridge
+        fn = getattr(bridge, "reset_workbook", None)
+        if fn is None:
+            raise BridgeError("ApiNotSupported", "Active bridge cannot reset the workbook.")
+        return await fn(keep_name)
+
     async def set_sheet_visibility(self, name: str, visible: bool) -> bool:
         return await self.active_bridge.set_sheet_visibility(name, visible)
 

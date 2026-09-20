@@ -1,7 +1,7 @@
 {
   "name": "excelpilot-addin",
   "version": "1.0.0",
-  "description": "Office.js task-pane add-in for ExcelPilot AI Agent",
+  "description": "Office.js task-pane add-in for ExcelPilot. Still under development.",
   "scripts": {
     "build": "webpack --mode production",
     "dev-server": "webpack serve --mode development",

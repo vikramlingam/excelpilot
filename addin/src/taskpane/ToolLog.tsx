@@ -23,9 +23,9 @@ export const ToolLog: React.FC<ToolLogProps> = ({ items, onSelectRange }) => {
     <div
       style={{
         margin: "8px 12px",
-        backgroundColor: "#f9f9f9",
-        border: "1px solid #e5e5e5",
-        borderRadius: "6px",
+        backgroundColor: "#ffffff",
+        border: "1px solid #d8e0ea",
+        borderRadius: "8px",
         overflow: "hidden",
       }}
     >
@@ -35,7 +35,7 @@ export const ToolLog: React.FC<ToolLogProps> = ({ items, onSelectRange }) => {
           justifyContent: "space-between",
           alignItems: "center",
           padding: "6px 10px",
-          backgroundColor: "#f0f0f0",
+          backgroundColor: "#eef2f6",
           cursor: "pointer",
         }}
         onClick={() => setCollapsed(!collapsed)}
@@ -59,7 +59,7 @@ export const ToolLog: React.FC<ToolLogProps> = ({ items, onSelectRange }) => {
               }}
             >
               <div>
-                <Text size={200} weight="medium" style={{ color: "#0078d4" }}>
+                <Text size={200} weight="medium" style={{ color: "#3d5a80" }}>
                   {item.name}
                 </Text>
                 {item.args?.address && (
